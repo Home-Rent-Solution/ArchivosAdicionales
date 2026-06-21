@@ -1,0 +1,252 @@
+name: home-rent-solution
+
+x-ms-environment: &ms-environment
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Duoc.2026}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_USERNAME: guest
+  SPRING_RABBITMQ_PASSWORD: guest
+  JAVA_TOOL_OPTIONS: -Deureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka/
+
+x-ms-common: &ms-common
+  restart: unless-stopped
+  networks:
+    - home-rent-network
+  depends_on:
+    mysql:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    eureka:
+      condition: service_started
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Duoc.2026}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      - home-rent-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - home-rent-network
+
+  eureka:
+    build:
+      context: ./Eureka
+    restart: unless-stopped
+    environment:
+      EUREKA_INSTANCE_HOSTNAME: eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - home-rent-network
+
+  ms-comentarios:
+    <<: *ms-common
+    build:
+      context: ./MS-Comentarios
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8080"
+      SPRING_APPLICATION_NAME: ms-comentarios
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_comentarios_dev?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8080:8080"
+
+  ms-propiedades:
+    <<: *ms-common
+    build:
+      context: ./MS-Propiedades
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8081"
+      SPRING_APPLICATION_NAME: ms-propiedades
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_propiedades_dev?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8081:8081"
+
+  ms-anfitriones:
+    <<: *ms-common
+    build:
+      context: ./MS-Anfitriones
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8082"
+      SPRING_APPLICATION_NAME: ms-anfitriones
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_anfitriones_dev?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8082:8082"
+
+  ms-inquilinos:
+    <<: *ms-common
+    build:
+      context: ./MS-Inquilinos
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8083"
+      SPRING_APPLICATION_NAME: ms-inquilinos
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_inquilinos_dev?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8083:8083"
+
+  ms-reservas:
+    <<: *ms-common
+    build:
+      context: ./MS-Reservas
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8084"
+      SPRING_APPLICATION_NAME: ms-reservas
+      SPRING_CLOUD_DISCOVERY_ENABLED: "true"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_reservas?allowPublicKeyRetrieval=true&useSSL=false
+      MS_PROPIEDADES_URL: http://ms-propiedades:8081
+      MS_INQUILINOS_URL: http://ms-inquilinos:8083
+      MS_PAGOS_URL: http://ms-pagos:8085
+      MS_LIMPIEZA_URL: http://ms-limpieza:8086
+      MS_MENSAJERIA_URL: http://ms-mensajeria:8087
+      MS_PRECIOS_URL: http://ms-precios:8088
+    ports:
+      - "8084:8084"
+
+  ms-pagos:
+    <<: *ms-common
+    build:
+      context: ./MS-Pagos
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8085"
+      SPRING_APPLICATION_NAME: ms-pagos
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pagos?allowPublicKeyRetrieval=true&useSSL=false
+      MS_RESERVAS_URL: http://ms-reservas:8084
+      MS_INQUILINOS_URL: http://ms-inquilinos:8083
+    ports:
+      - "8085:8085"
+
+  ms-limpieza:
+    <<: *ms-common
+    build:
+      context: ./MS-Limpieza
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8086"
+      SPRING_APPLICATION_NAME: ms-limpieza
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_limpieza?allowPublicKeyRetrieval=true&useSSL=false
+      MS_RESERVAS_URL: http://ms-reservas:8084
+    ports:
+      - "8086:8086"
+
+  ms-mensajeria:
+    <<: *ms-common
+    build:
+      context: ./MS-Mensajeria
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8087"
+      SPRING_APPLICATION_NAME: ms-mensajeria
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_mensajeria?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8087:8087"
+
+  ms-precios:
+    <<: *ms-common
+    build:
+      context: ./MS-Precios
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8088"
+      SPRING_APPLICATION_NAME: ms-precios
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_precios?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8088:8088"
+
+  ms-seguros:
+    <<: *ms-common
+    build:
+      context: ./MS-Seguros
+    environment:
+      <<: *ms-environment
+      SERVER_PORT: "8089"
+      SPRING_APPLICATION_NAME: ms-seguros
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_seguros?allowPublicKeyRetrieval=true&useSSL=false
+    ports:
+      - "8089:8089"
+
+  api-gateway:
+    build:
+      context: ./API-Gateway/apigateway
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8090"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      JAVA_TOOL_OPTIONS: -Deureka.client.serviceUrl.defaultZone=http://eureka:8761/eureka/
+    depends_on:
+      eureka:
+        condition: service_started
+      ms-comentarios:
+        condition: service_started
+      ms-propiedades:
+        condition: service_started
+      ms-anfitriones:
+        condition: service_started
+      ms-inquilinos:
+        condition: service_started
+      ms-reservas:
+        condition: service_started
+      ms-pagos:
+        condition: service_started
+      ms-limpieza:
+        condition: service_started
+      ms-mensajeria:
+        condition: service_started
+      ms-precios:
+        condition: service_started
+      ms-seguros:
+        condition: service_started
+    ports:
+      - "8090:8090"
+    networks:
+      - home-rent-network
+
+volumes:
+  mysql-data:
+
+networks:
+  home-rent-network:
+    driver: bridge
