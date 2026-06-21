@@ -1,4 +1,153 @@
-docker compose config
-docker compose up --build
+﻿GUIA PASO A PASO DE VERIFICACION DEL PROYECTO
+================================================
+
+PASO 1: REVISAR EL ESTADO DEL REPOSITORIO
+-----------------------------------------
+
+Comando:
+
+git status -sb
+
+// Muestra la rama actual, si está sincronizada con GitHub y qué archivos tienen cambios pendientes. Permite evitar que se sobrescriban o confirmen cambios de otro integrante por accidente.
+
+
+PASO 2: REVISAR EL ULTIMO COMMIT
+--------------------------------
+
+Comando:
+
+git log -1 --oneline
+
+// Muestra el identificador y mensaje del último commit. Sirve para confirmar que el repositorio tiene la versión esperada antes de ejecutar las pruebas.
+
+
+PASO 3: EJECUTAR LAS PRUEBAS
+----------------------------
+
+Comando:
+
+.\mvnw.cmd test
+
+// Compila el microservicio y ejecuta sus pruebas automatizadas. El resultado esperado es BUILD SUCCESS.
+
+
+PASO 4: EJECUTAR LA VERIFICACION COMPLETA Y JACOCO
+--------------------------------------------------
+
+Comando:
+
+.\mvnw.cmd clean verify
+
+// Elimina compilaciones anteriores, vuelve a compilar, ejecuta todas las pruebas, aplica las validaciones configuradas y genera el informe de cobertura JaCoCo. Si el POM exige un mínimo de 80 %, el comando también falla cuando no se alcanza.
+
+
+PASO 5: ABRIR EL INFORME DE COBERTURA JACOCO
+--------------------------------------------
+
+Comando:
+
+Start-Process .\target\site\jacoco\index.html
+
+// Abre en el navegador el informe HTML generado por JaCoCo. Permite revisar el porcentaje total y las clases, métodos y líneas que todavía no tienen pruebas.
+
+La cobertura exigida por la pauta debe ser igual o superior al 80 %.
+
+
+ALTERNATIVA: VALIDAR SIN TENER JDK 25 INSTALADO
+-----------------------------------------------
+
+Comando para PowerShell:
+
+docker run --rm -v "${PWD}:/app" -w /app maven:3.9.11-eclipse-temurin-25 mvn clean verify
+
+// Crea temporalmente un contenedor con Maven y Java 25, monta el repositorio actual en /app y ejecuta clean verify dentro del contenedor. Al finalizar, el contenedor se elimina automáticamente, pero los resultados quedan en target.
+
+Usar este comando cuando Maven muestre:
+
+release version 25 not supported
+
+
+VERIFICACION DEL DOCKER COMPOSE
+===============================
+
+Estos comandos deben ejecutarse desde la carpeta que contiene:
+
+- docker-compose.yml
+- .env.example
+- las carpetas de Eureka, API-Gateway y los microservicios
+
+
+PASO 6: VALIDAR LA SINTAXIS Y VARIABLES DEL COMPOSE
+---------------------------------------------------
+
+Comando:
+
+docker compose --env-file .env.example config
+
+// Lee docker-compose.yml, aplica las variables de .env.example y muestra la configuración final. Detecta errores de sintaxis, variables inválidas y referencias incorrectas antes de crear los contenedores.
+
+
+PASO 7: COMPROBAR LOS SERVICIOS DECLARADOS
+------------------------------------------
+
+Comando:
+
+docker compose --env-file .env.example config --services
+
+// Muestra solamente los nombres de los servicios definidos.
+
+
+PASO 8: CONSTRUIR Y LEVANTAR EL ENTORNO
+---------------------------------------
+
+Comando:
+
+docker compose --env-file .env.example up --build
+
+// Construye las imágenes y levanta todo el entorno. La consola queda mostrando los registros de los servicios.
+
+Para ejecutarlo en segundo plano se puede usar:
+
+docker compose --env-file .env.example up --build -d
+
+
+PASO 9: REVISAR EL ESTADO DE LOS CONTENEDORES
+---------------------------------------------
+
+Comando:
+
 docker compose ps
+
+// Muestra qué contenedores están activos, sus puertos y su estado. Los servicios deben aparecer como Up o healthy, según la configuración de cada contenedor.
+
+
+PASO 10: REVISAR LOS ULTIMOS REGISTROS
+--------------------------------------
+
+Comando:
+
 docker compose logs --tail 100
+
+// Muestra las últimas 100 líneas de registros de todos los servicios. Sirve para detectar errores de conexión con MySQL, RabbitMQ, Eureka o entre microservicios.
+
+Para revisar solamente un servicio:
+
+docker compose logs --tail 100 NOMBRE_DEL_SERVICIO
+
+Ejemplo:
+
+docker compose logs --tail 100 ms-mensajeria
+
+
+PASO 11: DETENER EL ENTORNO
+---------------------------
+
+Comando:
+
+docker compose down
+
+// Detiene y elimina los contenedores y la red creados por Compose. No elimina el volumen de MySQL.
+
+Para eliminar también los volúmenes y reiniciar las bases de datos desde cero, usar solamente cuando se tenga seguridad de que los datos pueden borrarse:
+
+docker compose down -v
