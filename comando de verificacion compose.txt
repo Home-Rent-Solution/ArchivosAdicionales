@@ -1,0 +1,4 @@
+docker compose config
+docker compose up --build
+docker compose ps
+docker compose logs --tail 100

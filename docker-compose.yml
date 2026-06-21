@@ -82,6 +82,8 @@ services:
       SPRING_APPLICATION_NAME: ms-comentarios
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_comentarios_dev?allowPublicKeyRetrieval=true&useSSL=false
+      MS_INQUILINOS_URL: http://ms-inquilinos:8083
+      MS_PROPIEDADES_URL: http://ms-propiedades:8081
     ports:
       - "8080:8080"
 

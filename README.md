@@ -120,13 +120,19 @@ Reservas	http://localhost:8090/api/v1/reservas
 
 Pagos	http://localhost:8090/api/v1/pagos
 
-Limpieza	http://localhost:8090/api/v1/limpieza
+Limpieza	http://localhost:8090/api/v1/limpiezas
+
+Limpieza V2	http://localhost:8090/api/v2/limpiezas
+
+Pagos V2	http://localhost:8090/api/v2/pagos
 
 Mensajería	http://localhost:8090/api/v1/mensajes
 
 Precios	http://localhost:8090/api/v1/precios
 
 Seguros	http://localhost:8090/api/v1/seguros
+
+Seguros V2	http://localhost:8090/api/v2/seguros
 
 Servicios de infraestructura
 
@@ -296,23 +302,19 @@ Documentación Swagger
 
 
 
-En esta versión del proyecto se prioriza la exposición de endpoints mediante API Gateway y pruebas con Postman.
+Swagger se encuentra habilitado y centralizado mediante API Gateway.
 
 
 
-Si Swagger se encuentra habilitado en algún microservicio, la ruta local esperada sería:
+Swagger central:
 
 
 
-http://localhost:PUERTO/swagger-ui/index.html
+http://localhost:8090/swagger-ui.html
 
 
 
-Ejemplo:
-
-
-
-http://localhost:8087/swagger-ui/index.html
+Desde esta interfaz se puede consultar la documentación de los endpoints expuestos por los microservicios.
 
 Observaciones
 
