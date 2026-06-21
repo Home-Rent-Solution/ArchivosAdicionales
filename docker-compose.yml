@@ -179,6 +179,8 @@ services:
       SERVER_PORT: "8087"
       SPRING_APPLICATION_NAME: ms-mensajeria
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_mensajeria?allowPublicKeyRetrieval=true&useSSL=false
+      MS_INQUILINOS_URL: http://ms-inquilinos:8083
+      MS_RESERVAS_URL: http://ms-reservas:8084
     ports:
       - "8087:8087"
 
@@ -191,6 +193,9 @@ services:
       SERVER_PORT: "8088"
       SPRING_APPLICATION_NAME: ms-precios
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_precios?allowPublicKeyRetrieval=true&useSSL=false
+      MS_PROPIEDADES_URL: http://ms-propiedades:8081
+      MS_RESERVAS_URL: http://ms-reservas:8084
+      MS_PAGOS_URL: http://ms-pagos:8085
     ports:
       - "8088:8088"
 
@@ -203,6 +208,8 @@ services:
       SERVER_PORT: "8089"
       SPRING_APPLICATION_NAME: ms-seguros
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_seguros?allowPublicKeyRetrieval=true&useSSL=false
+      MS_RESERVAS_URL: http://ms-reservas:8084
+      MS_PAGOS_URL: http://ms-pagos:8085
     ports:
       - "8089:8089"
 
